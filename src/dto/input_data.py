@@ -28,7 +28,7 @@ class InputData(BaseModel):
             datetime.datetime.strptime(v, "%d/%m/%Y")
         except ValueError:
             raise ValueError("O formato da data pode estar errado (dd/mm/YYYY) ou os valores do dia(1 ~ 31) ou mês (1 ~ 12) fogem dos intervalos aceitos")
-        return v
+        return v.lstrip("0")
 
     @field_validator("data_final", mode="plain")
     @classmethod
