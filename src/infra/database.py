@@ -1,8 +1,10 @@
 
 from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 from core.config import configuration
 
 engine = create_engine(str(configuration.db_url), echo=False)
+Session = sessionmaker(bind=engine)
 
 def check_existence_function(func_name: str):
     result = None
@@ -24,40 +26,20 @@ def check_existence_function(func_name: str):
     result_boolean = result.scalar_one()
     return result_boolean
 
+def execute_option(session: Session, file_path: str) -> bool:
+    return
+
 # Verifica se todas a funcao saboya_geometry existe no banco de dados, caso nao sera criado
 def bootstrap():
     if (not check_existence_function("saboya_geometry")):
+        with Session() as session_sql:
+            execute_option(session_sql, path)
         print("Must create function")
-        pass
 
 bootstrap()
 
 # Area de experimentacao
 if __name__ == "__main__":
-    with engine.connect() as conn:
-        result = conn.execute(text("select 'hello world'"))
-        print(result.all())
-
-    with engine.connect() as conn:
-        result = conn.execute(
-            text("SELECT id FROM places_pilot_area2 WHERE id = :id"),
-            [{"id": 1}]
-        )
-        print(result.all())
-
-    with engine.connect() as conn:
-        result = conn.execute(
-            text("SELECT saboya_geometry(:si, :me)"),
-            [{"si": 1, "me": 32}]
-        )
-        print(result.all())
-
-    with engine.connect() as conn:
-        result = conn.execute(
-                text("SELECT ST_SetSRID(ST_Point(:x, :y),4326)"),
-                {"x": 13, "y": 234}
-        )
-        print(result.all())
     # URL para conectar no banco de dados
     print(engine.url)
     # Nome do banco de dados
@@ -66,4 +48,7 @@ if __name__ == "__main__":
     # Info dos drivers
     print(engine.dialect.name)      # e.g., 'postgresql'
     print(engine.dialect.driver)    # e.g., 'psycopg2'
+
+    from pathlib import Path
+    project_root = Path(__file__).resolve().parents[1]
 

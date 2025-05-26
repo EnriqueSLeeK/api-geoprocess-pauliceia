@@ -1,19 +1,23 @@
 
 from typing import List
 from sqlalchemy import text
-from infra.database import engine
+from sqlalchemy.exc import SQLAlchemyError
+from schemas.place_schema import lugares_area_piloto2
+from infra.database import engine, Session
 from dto.input_data import InputData
 from dto.return_data import ReturnData
 
+# Em todas as queries dinamicas usam queries parametrizadas
 class GeoProcessor:
     def __init__(self, data: List[InputData]):
         self.geo_data_list: List[InputData] = data
+
         self.log: ReturnData = {
             "log_sucesso": [],
             "log_erro": []
         }
 
-    def __prepare_date(self, date_string: str) -> [int, int, int]:
+    def __prepare_date(self, date_string: str):
         splitted_date = [
             int(date_component) for date_component in date_string.split("/")
         ]
@@ -29,7 +33,7 @@ class GeoProcessor:
                 text("SELECT saboya_geometry(:street_id, :metragem) AS saboya_geometry"),
                 {"street_id": stree_id, "metragem": metragem},
             )
-        result = geographical_coordinates.fetchone()
+        result = geographical_coordinates.scalar_one()
         return result
 
 
@@ -37,13 +41,47 @@ class GeoProcessor:
         geo_coord_srid = None
         with engine.connect() as conn:
             geo_coord_srid = conn.execute(
-                text("SELECT ST_SetSRID(ST_Point(:x, :y),4326)"),
-                {"x": coord[0], "y": coord[1]},
+                text("SELECT ST_GeomFromText(:point, 4326)"),
+                {"point": coord},
             )
-        result = geo_coord_srid.fetchone()
+        result = geo_coord_srid.scalar_one()
         return result
 
-    def __insert_data(batch):
+    def __get_max_id(self):
+        res = None
+        with engine.connect() as conn:
+            res = conn.execute(text("SELECT MAX(id) FROM places_pilot_area2"))
+
+        return res.scalar_one()
+
+    def __insert_data(self, item, index):
+        lugar = lugares_area_piloto2(
+          id = self.__get_max_id() + 1,
+          id_street=item["id_street"],
+          number=item["number"],
+          original_n=item["original_n"],
+          source=item["source"],
+          author=item["author"],
+          date=item["date"],
+          first_day=item["first_day"],
+          first_month=item["first_month"],
+          first_year=item["first_year"],
+          last_day=item["last_day"],
+          last_month=item["last_month"],
+          last_year=item["last_year"],
+          geom=item["geom"],
+        )
+
+        with Session() as session_sql:
+            try:
+                session_sql.add(lugar)
+                session_sql.commit()
+            except SQLAlchemyError as e:
+                print(e._message())
+                session_sql.rollback()
+                print("Failure at inserting!")
+
+        print("Insertion Success!")
         return
 
     def __check_date_ok(self, index, which, date):
@@ -51,8 +89,12 @@ class GeoProcessor:
             day, month, year = date
             return [day, month, year]
         except ValueError:
-            self.log["log_error"].append({"linha": index,
-                 "descricao": f"Erro: Data {"data_" + which} incompleta, por favor verificar a sua data."})
+            self.log["log_erro"].append(
+                {
+                    "linha": index,
+                    "descricao": f"Erro: Data {'data_' + which} incompleta, por favor verificar a sua data.",
+                }
+            )
 
     def process_data(self) -> ReturnData:
 
@@ -62,24 +104,26 @@ class GeoProcessor:
                 item["first_day"],\
                 item["first_month"],\
                 item["first_year"]= self.__check_date_ok(index, "inicio",
-                              self.__prepare_date(geo_data["data_inicio"]))
+                              self.__prepare_date(geo_data.data_inicio))
                 item["last_day"],\
                 item["last_month"],\
                 item["last_year"]= self.__check_date_ok(index, "final",
-                               self.__prepare_date(geo_data["data_final"]))
+                               self.__prepare_date(geo_data.data_final))
             except Exception:
                 continue
 
-            item["date"]= geo_data["data"]
-            item["author"] = geo_data["autor"]
-            item["source"] = geo_data["fonte"]
+            item["date"]= geo_data.data
+            item["author"] = geo_data.autor
+            item["source"] = geo_data.fonte
 
-            item["id_street"] = geo_data["id_rua"]
-            item["number"] = geo_data["numero_do_lugar"]
-            item["saboya_numero"] = geo_data["original_n"]
+            item["id_street"] = geo_data.id_rua
+            item["number"] = geo_data.numero_lugar
+            item["original_n"] = geo_data.saboya_numero
 
-            item["coord"] = self.__calculate_geographical_coord(item["id_street"], geo_data["metragem"])
+            item["coord"] = self.__calculate_geographical_coord(
+                item["id_street"], geo_data.metragem
+            )
             item["geom"] = self.__convert_geographical_coord_to_SRID(item["coord"])
+            self.__insert_data(item, index)
 
         return self.log
-
