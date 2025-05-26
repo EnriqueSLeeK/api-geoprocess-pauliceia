@@ -13,6 +13,6 @@ Api para geoprocessamento e insercao dos dados no banco de dados no projeto Paul
 2. Ajuste o .env
 
 3. Execute o seguinte comando
-`
+```
   fastapi run src/main.py
-`
+```
