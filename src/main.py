@@ -1,7 +1,5 @@
 from fastapi import FastAPI
+from geoprocess.controller import router as geoprocess_router
 
 app = FastAPI()
-
-@app.get("/process_data")
-def process_geo_data(geo_data: list[int]):
-    return
+app.include_router(geoprocess_router, prefix="/geoprocess", tags=["Geoprocess"])
