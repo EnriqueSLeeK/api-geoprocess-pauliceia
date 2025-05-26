@@ -26,19 +26,22 @@ class InputData(BaseModel):
         import datetime
         try:
             datetime.datetime.strptime(v, "%d/%m/%Y")
+            return v.lstrip("0")
         except ValueError:
             raise ValueError("O formato da data pode estar errado (dd/mm/YYYY) ou os valores do dia(1 ~ 31) ou mês (1 ~ 12) fogem dos intervalos aceitos")
-        return v.lstrip("0")
 
     @field_validator("data_final", mode="plain")
     @classmethod
     def check_dates_order(cls, v, values):
         import datetime
+        data = values.data
+
+        if ("data_inicio" not in data):
+            raise ValueError("Problema na data inicio")
 
         if v is None or v == "":
             return v
         
-        data = values.data
         final = datetime.datetime.strptime(v, "%d/%m/%Y")
         inicio = datetime.datetime.strptime(data["data_inicio"], "%d/%m/%Y")
         if (inicio > final):
