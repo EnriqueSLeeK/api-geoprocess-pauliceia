@@ -34,6 +34,10 @@ class InputData(BaseModel):
     @classmethod
     def check_dates_order(cls, v, values):
         import datetime
+
+        if v is None or v == "":
+            return v
+        
         data = values.data
         final = datetime.datetime.strptime(v, "%d/%m/%Y")
         inicio = datetime.datetime.strptime(data["data_inicio"], "%d/%m/%Y")

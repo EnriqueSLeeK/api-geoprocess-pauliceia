@@ -5,7 +5,7 @@ from dto.input_data import InputData
 from dto.return_data import ReturnData
 
 def process_place_data(data: List[InputData]) -> ReturnData:
-    geo_processor = GeoProcessor(data)
-    result = geo_processor.process_data()
-    return True
+    geprocessor = GeoProcessor(data)
+    result_log = geprocessor.process_data()
+    return result_log
 

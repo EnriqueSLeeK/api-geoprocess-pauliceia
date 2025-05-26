@@ -22,6 +22,9 @@ class GeoProcessor:
         self.log["log_sucesso"].append(log)
 
     def __prepare_date(self, date_string: str):
+        if date_string is None or date_string == "":
+            return None
+
         splitted_date = [
             int(date_component) for date_component in date_string.split("/")
         ]
@@ -69,7 +72,7 @@ class GeoProcessor:
         try:
             with engine.connect() as conn:
                 res = conn.execute(text("SELECT MAX(id) FROM places_pilot_area2"))
-                return res.scalar_one()
+                return res.scalar_one() or 0
         except SQLAlchemyError as e:
             self.__fail_log(
                 log_entry_factory(self.index, f"Erro no banco de dados: {str(e)}")
@@ -151,15 +154,20 @@ class GeoProcessor:
                     )
                 )
 
-                item["last_day"], item["last_month"], item["last_year"] = (
-                    self.__check_date_ok(
-                        "final", self.__prepare_date(geo_data.data_final)
-                    )
-                )
 
             except Exception:
                 # As excecoes vao ser gravadas nos metodos
                 continue
+
+            last_date = self.__prepare_date(geo_data.data_final)
+            if last_date is None:
+                item["last_day"], item["last_month"], item["last_year"] = [None, None, None]
+            else:
+                try:
+                    item["last_day"], item["last_month"], item["last_year"] = self.__check_date_ok("last", last_date)
+                except Exception:
+                    continue
+
 
             self.__insert_data(item)
 
