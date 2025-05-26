@@ -6,9 +6,9 @@ Api para geoprocessamento e insercao dos dados no banco de dados no projeto Paul
 
 ## Como Executar
 1. Instale as dependencias
-`
+```
   pip -r requirements.txt
-`
+```
 
 2. Ajuste o .env
 
