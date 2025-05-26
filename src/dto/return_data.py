@@ -1,6 +1,12 @@
 from typing import List
 from pydantic import BaseModel
 
+def log_entry_factory(index, descricao):
+    return {
+        "linha": index,
+        "descricao": descricao
+    }
+
 class LogEntry(BaseModel):
     linha: int
     descricao: str
