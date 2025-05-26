@@ -1,11 +1,11 @@
-from sqlalchemy import Column, Integer, Float, String
+from sqlalchemy import Column, Integer, Float, String, Table
 from geoalchemy2 import Geometry
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
 class lugares_area_piloto2(Base):
-    __tablename__ = 'places_pilot_area2'  # replace with your actual table name
+    __tablename__ = 'places_pilot_area2'
 
     id = Column(Integer, primary_key=True, index=True)
     id_street = Column(Integer, nullable=True)

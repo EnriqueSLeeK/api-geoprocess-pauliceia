@@ -47,14 +47,15 @@ if __name__ == "__main__":
 
     with engine.connect() as conn:
         result = conn.execute(
-            text("SELECT saboya_geometry(1, 30.4)"),
-            [{"id": 1}]
+            text("SELECT saboya_geometry(:si, :me)"),
+            [{"si": 1, "me": 32}]
         )
         print(result.all())
 
     with engine.connect() as conn:
         result = conn.execute(
-                text("SELECT ST_SetSRID(ST_Point(13, 323),4326)")
+                text("SELECT ST_SetSRID(ST_Point(:x, :y),4326)"),
+                {"x": 13, "y": 234}
         )
         print(result.all())
     # URL para conectar no banco de dados

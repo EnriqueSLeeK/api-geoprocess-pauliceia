@@ -57,27 +57,29 @@ class GeoProcessor:
     def process_data(self) -> ReturnData:
 
         for index, geo_data in enumerate(self.geo_data_list):
+            item = {}
             try:
-                first_day,\
-                first_month,\
-                first_year = self.__check_date_ok(index, "inicio",
+                item["first_day"],\
+                item["first_month"],\
+                item["first_year"]= self.__check_date_ok(index, "inicio",
                               self.__prepare_date(geo_data["data_inicio"]))
-                last_day,\
-                last_month,\
-                last_year = self.__check_date_ok(index, "final",
+                item["last_day"],\
+                item["last_month"],\
+                item["last_year"]= self.__check_date_ok(index, "final",
                                self.__prepare_date(geo_data["data_final"]))
             except Exception:
                 continue
 
-            date = geo_data["data"]
-            author = geo_data["autor"]
-            source = geo_data["fonte"]
+            item["date"]= geo_data["data"]
+            item["author"] = geo_data["autor"]
+            item["source"] = geo_data["fonte"]
 
-            id_street = geo_data["id_rua"]
-            number = geo_data["numero_do_lugar"]
-            saboya_numero = geo_data["original_n"]
+            item["id_street"] = geo_data["id_rua"]
+            item["number"] = geo_data["numero_do_lugar"]
+            item["saboya_numero"] = geo_data["original_n"]
 
-            coord = self.__calculate_geographical_coord(id_street, geo_data["metragem"])
-            geom = self.__convert_geographical_coord_to_SRID(coord)
+            item["coord"] = self.__calculate_geographical_coord(item["id_street"], geo_data["metragem"])
+            item["geom"] = self.__convert_geographical_coord_to_SRID(item["coord"])
+
         return self.log
 
