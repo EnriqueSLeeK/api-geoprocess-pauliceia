@@ -33,20 +33,21 @@ class GeoProcessor:
 
     # Nao se confunda: Na funcao do saboya_geometry definida no banco pede
     # o numberPlace, mas na verdade ele quer a metragem do imovel na rua
-    def __calculate_geographical_coord(self, stree_id: int, metragem: float):
+    def __calculate_geographical_coord(self, street_id: int, metragem: float):
         geographical_coordinates = None
         try:
             with engine.connect() as conn:
                 geographical_coordinates = conn.execute(
                     text("SELECT saboya_geometry(:street_id, :metragem) AS saboya_geometry"),
-                    {"street_id": stree_id, "metragem": metragem},
+                    {"street_id": street_id, "metragem": metragem},
                 )
-            result = geographical_coordinates.scalar_one()
-            return result
-        except Exception:
+                result = geographical_coordinates.scalar_one()
+                return result
+        except SQLAlchemyError as e:
            self.__fail_log(
-                log_entry_factory(self.index, "Comunicacao com o banco de dados falhou!")
+                log_entry_factory(self.index, f"Erro no banco de dados: {str(e)}")
             )
+           return None
 
 
     def __convert_geographical_coord_to_SRID(self, coord):
@@ -92,13 +93,10 @@ class GeoProcessor:
                     log_entry_factory(self.index, "Operacao feita com sucesso!")
                 )
             except SQLAlchemyError as e:
-                print(e._message())
                 session_sql.rollback()
                 self.__fail_log(
-                    log_entry_factory(self.index, "Falha na insercao dos dados!")
+                    log_entry_factory(self.index, "Falha na insercao: {str(e)}")
                 )
-
-        return
 
     def __check_date_ok(self, which, date):
         try:
@@ -117,6 +115,14 @@ class GeoProcessor:
         for index, geo_data in enumerate(self.geo_data_list):
             self.index = index + 1
             item = {}
+            item["date"]= geo_data.data
+            item["author"] = geo_data.autor
+            item["source"] = geo_data.fonte
+
+            item["id_street"] = geo_data.id_rua
+            item["number"] = geo_data.numero_lugar
+            item["original_n"] = geo_data.saboya_numero
+
             try:
                 item["first_day"],\
                 item["first_month"],\
@@ -126,21 +132,13 @@ class GeoProcessor:
                 item["last_month"],\
                 item["last_year"]= self.__check_date_ok("final",
                                self.__prepare_date(geo_data.data_final))
+                item["coord"] = self.__calculate_geographical_coord(
+                    item["id_street"], geo_data.metragem
+                )
+                item["geom"] = self.__convert_geographical_coord_to_SRID(item["coord"])
             except Exception:
                 continue
 
-            item["date"]= geo_data.data
-            item["author"] = geo_data.autor
-            item["source"] = geo_data.fonte
-
-            item["id_street"] = geo_data.id_rua
-            item["number"] = geo_data.numero_lugar
-            item["original_n"] = geo_data.saboya_numero
-
-            item["coord"] = self.__calculate_geographical_coord(
-                item["id_street"], geo_data.metragem
-            )
-            item["geom"] = self.__convert_geographical_coord_to_SRID(item["coord"])
             self.__insert_data(item)
 
         return self.log
