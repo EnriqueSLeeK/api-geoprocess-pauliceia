@@ -11,9 +11,7 @@ API para geoprocessamento e inserção dos dados no banco de dados no projeto Pa
 1. Instale as dependências.
 
 ```
-
   pip -r requirements.txt
-
 ```
 
 2. Ajuste o .env para suas configurações.
@@ -21,8 +19,6 @@ API para geoprocessamento e inserção dos dados no banco de dados no projeto Pa
 3. Execute o seguinte comando.
 
 ```
-
   fastapi run src/main.py
-
 ```
 
