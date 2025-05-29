@@ -22,16 +22,6 @@ class GeoProcessor:
     def __success_log(self, log: LogEntry):
         self.log["log_sucesso"].append(log)
 
-    def __prepare_date(self, date_string: str):
-        if date_string is None or date_string == "":
-            return None
-
-        splitted_date = [
-            int(date_component) for date_component in date_string.split("/")
-        ]
-
-        return splitted_date
-
     # Nao se confunda: Na funcao do saboya_geometry definida no banco pede
     # o numberPlace, mas na verdade ele quer a metragem do imovel na rua
     def __calculate_geographical_coord(self, street_id: int, metragem: float):
@@ -137,12 +127,18 @@ class GeoProcessor:
         if item["geom"] is None:
             raise ValueError()
 
-        item["first_day"], item["first_month"], item["first_year"] = self.__prepare_date(geo_data.data_inicio)
+        item["first_day"], item["first_month"], item["first_year"] = [
+            int(date_component) for date_component in geo_data.data_inicio.split("/")
+        ]
 
         if (geo_data.data_final is None or geo_data.data_final == ""):
             item["last_day"], item["last_month"], item["last_year"] = [None, None, None]
         else:
-            item["last_day"], item["last_month"], item["last_year"] = self.__prepare_date(geo_data.data_final)
+            item["last_day"], item["last_month"], item["last_year"] = [
+                int(date_component) for date_component in geo_data.data_final.split("/")
+            ]
+
+        return item
 
     def __check_existence(self, geo_data):
 
