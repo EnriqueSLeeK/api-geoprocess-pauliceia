@@ -132,12 +132,13 @@ class GeoProcessor:
             int(date_component) for date_component in geo_data.data_inicio.split("/")
         ]
 
-        if (geo_data.data_final is None or geo_data.data_final == ""):
-            item["last_day"], item["last_month"], item["last_year"] = [None, None, None]
-        else:
-            item["last_day"], item["last_month"], item["last_year"] = [
+        item["last_day"], item["last_month"], item["last_year"] = (
+            [None, None, None]
+            if geo_data.data_final is None or geo_data.data_final == ""
+            else [
                 int(date_component) for date_component in geo_data.data_final.split("/")
             ]
+        )
 
         return item
 
