@@ -106,9 +106,7 @@ class GeoProcessor:
                     log_entry_factory(self.index, f"Falha na insercao: {str(e)}")
                 )
 
-    def extract_and_convert_data(self, geo_data):
-        item = {}
-
+    def __compute_coord(self, item, geo_data):
         item["coord"] = self.__calculate_geographical_coord(
             geo_data.id_rua, geo_data.metragem
         )
@@ -119,15 +117,7 @@ class GeoProcessor:
         if item["geom"] is None:
             raise ValueError()
 
-        item["date"] = geo_data.data
-        item["author"] = geo_data.autor
-        item["source"] = geo_data.fonte
-
-        item["id_street"] = geo_data.id_rua
-        item["number"] = geo_data.numero_lugar
-        item["original_n"] = geo_data.saboya_numero
-
-
+    def __extract_date(self, item, geo_data):
         item["first_day"], item["first_month"], item["first_year"] = [
             int(date_component) for date_component in geo_data.data_inicio.split("/")
         ]
@@ -139,6 +129,22 @@ class GeoProcessor:
                 int(date_component) for date_component in geo_data.data_final.split("/")
             ]
         )
+
+    def __extract_and_convert_data(self, geo_data):
+        item = {}
+
+        self.__compute_coord(item, geo_data)
+
+        item["date"] = geo_data.data
+        item["author"] = geo_data.autor
+        item["source"] = geo_data.fonte
+
+        item["id_street"] = geo_data.id_rua
+        item["number"] = geo_data.numero_lugar
+        item["original_n"] = geo_data.saboya_numero
+
+        self.__extract_date(item, geo_data)
+
 
         return item
 
@@ -189,7 +195,7 @@ class GeoProcessor:
             self.index = index + 1
             try:
                 self.__check_existence(geo_data)
-                item = self.extract_and_convert_data(geo_data)
+                item = self.__extract_and_convert_data(geo_data)
             except Exception as e:
                 continue
 
