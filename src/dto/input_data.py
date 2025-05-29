@@ -1,9 +1,6 @@
 
 
-from pydantic import BaseModel, Field, StrictStr, field_validator
-
-def date_validator():
-    return True
+from pydantic import BaseModel, Field, field_validator
 
 class InputData(BaseModel):
     rua: str = Field(..., min_length=1, max_length=1000)
