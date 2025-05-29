@@ -110,7 +110,7 @@ class GeoProcessor:
         item = {}
 
         item["coord"] = self.__calculate_geographical_coord(
-            item["id_street"], geo_data.metragem
+            geo_data.id_rua, geo_data.metragem
         )
         if item["coord"] is None:
             raise ValueError()
@@ -186,11 +186,10 @@ class GeoProcessor:
     def process_data(self) -> ReturnData:
         for index, geo_data in enumerate(self.geo_data_list):
             self.index = index + 1
-
             try:
-                self.__check_existence(geo_data)
+                # self.__check_existence(geo_data)
                 item = self.extract_and_convert_data(geo_data)
-            except Exception:
+            except Exception as e:
                 continue
 
             self.__insert_data(item)
