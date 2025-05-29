@@ -115,20 +115,6 @@ class GeoProcessor:
                     log_entry_factory(self.index, f"Falha na insercao: {str(e)}")
                 )
 
-    def __check_date_ok(self, which, date):
-        try:
-            day, month, year = date
-            return [day, month, year]
-        except ValueError:
-            self.__fail_log(
-                log_entry_factory(
-                    self.index,
-                    f"Erro: Data {'data_' + which} incompleta, por favor verificar a sua data.",
-                )
-            )
-            return None
-
-
     def extract_and_convert_data(self, geo_data):
         item = {}
         item["date"] = geo_data.data
