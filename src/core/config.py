@@ -17,6 +17,14 @@ class Configuration(BaseSettings):
 
     db_url: Optional[PostgresDsn] = None
 
+    @field_validator("table_name", mode="before")
+    @classmethod
+    def validate_table_name(cls, v, values):
+        import re
+        if not re.fullmatch(r'\w+', v):
+            raise ValueError("Invalid table name.")
+        return v
+
     @field_validator("db_url", mode="before")
     @classmethod
     def assemble_db_url(cls, v, values):

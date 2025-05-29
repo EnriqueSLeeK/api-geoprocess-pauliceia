@@ -173,28 +173,36 @@ class GeoProcessor:
         # os requisitos a seguir forem satisfeitos:
         #  id da rua
         #  numero do edificio
-        #  primeiro dia, mes, ano
-        res = None
+
         first_date = [int(date_component) for date_component in geo_data.data_inicio.split('/')]
+
+        query_str = f"""
+            SELECT 1 FROM {configuration.table_name}
+            WHERE id_street = :id_street
+              AND number = :number
+              AND first_day = :first_day
+              AND first_month = :first_month
+              AND first_year = :first_year
+            LIMIT 1
+        """
+
         with engine.connect() as conn:
-            query = conn.execute(
-                text("SELECT * FROM :table_name WHERE id_street=:id_street AND number=:number\
-                     AND first_day=:first_day AND first_month=:first_month AND first_year=:first_year"),
+            result = conn.execute(
+                text(query_str),
                 {
-                    "table_name": configuration.table_name,
                     "id_street": geo_data.id_rua,
                     "number": geo_data.numero_lugar,
                     "first_day": first_date[0],
                     "first_month": first_date[1],
                     "first_year": first_date[2],
-                },
-            )
-            res = query.scalar_one()
-        if res:
+                }
+            ).scalar()
+
+        if result:
             self.__fail_log(
                 log_entry_factory(
                     self.index,
-                    "O dado ja existe"
+                    "O dado já existe"
                 )
             )
             raise ValueError()
