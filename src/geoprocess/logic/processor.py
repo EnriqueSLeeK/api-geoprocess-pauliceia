@@ -36,6 +36,7 @@ class GeoProcessor:
                 )
                 result = geographical_coordinates.scalar_one()
                 return result
+
         except SQLAlchemyError as e:
             self.__fail_log(
                 log_entry_factory(self.index, f"Erro no banco de dados: {str(e)}")
@@ -61,11 +62,11 @@ class GeoProcessor:
     # Favor remover isso depois e colocar a logica de geracao de id no banco de dados
     def __get_max_id(self):
         res = None
+        statement = f"SELECT MAX(id) FROM {configuration.table_name}"
         try:
             with engine.connect() as conn:
                 res = conn.execute(
-                    text("SELECT MAX(id) FROM :table_name"),
-                    {"table_name": configuration.table_name},
+                    text(statement)
                 )
                 return res.scalar_one() or 0
         except SQLAlchemyError as e:
