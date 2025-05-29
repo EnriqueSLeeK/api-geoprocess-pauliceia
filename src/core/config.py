@@ -28,10 +28,16 @@ class Configuration(BaseSettings):
     @field_validator("db_url", mode="before")
     @classmethod
     def assemble_db_url(cls, v, values):
+
         if isinstance(v, str):
             return v
-        data = values.data
-        return f"postgresql://{data['db_user']}:{data['db_password']}@{data['db_host']}:{data['db_port']}/{data['db_name']}"
+
+        db_user = values.data.get('db_user')
+        db_password = values.data.get('db_password')
+        db_host = values.data.get('db_host')
+        db_port = values.data.get('db_port')
+        db_name = values.data.get('db_name')
+        return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 
     class Config:
         env_file: str  = ".env"
