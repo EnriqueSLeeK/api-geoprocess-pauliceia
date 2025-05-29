@@ -108,6 +108,17 @@ class GeoProcessor:
 
     def extract_and_convert_data(self, geo_data):
         item = {}
+
+        item["coord"] = self.__calculate_geographical_coord(
+            item["id_street"], geo_data.metragem
+        )
+        if item["coord"] is None:
+            raise ValueError()
+
+        item["geom"] = self.__convert_geographical_coord_to_SRID(item["coord"])
+        if item["geom"] is None:
+            raise ValueError()
+
         item["date"] = geo_data.data
         item["author"] = geo_data.autor
         item["source"] = geo_data.fonte
@@ -116,17 +127,6 @@ class GeoProcessor:
         item["number"] = geo_data.numero_lugar
         item["original_n"] = geo_data.saboya_numero
 
-        item["coord"] = self.__calculate_geographical_coord(
-            item["id_street"], geo_data.metragem
-        )
-
-        if item["coord"] is None:
-            raise ValueError()
-
-        item["geom"] = self.__convert_geographical_coord_to_SRID(item["coord"])
-
-        if item["geom"] is None:
-            raise ValueError()
 
         item["first_day"], item["first_month"], item["first_year"] = [
             int(date_component) for date_component in geo_data.data_inicio.split("/")
