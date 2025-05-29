@@ -151,21 +151,12 @@ class GeoProcessor:
         if item["geom"] is None:
             raise ValueError()
 
-        try:
-            item["first_day"], item["first_month"], item["first_year"] = (
-                self.__check_date_ok(
-                    "inicio", self.__prepare_date(geo_data.data_inicio)
-                )
-            )
-        except Exception:
-            # As excecoes vao ser gravadas nos metodos
-            raise ValueError()
+        item["first_day"], item["first_month"], item["first_year"] = self.__prepare_date(geo_data.data_inicio)
 
-        last_date = self.__prepare_date(geo_data.data_final)
-        if last_date is None:
+        if (geo_data.data_final is None or geo_data.data_final == ""):
             item["last_day"], item["last_month"], item["last_year"] = [None, None, None]
         else:
-            item["last_day"], item["last_month"], item["last_year"] = self.__check_date_ok("last", last_date)
+            item["last_day"], item["last_month"], item["last_year"] = self.__prepare_date(geo_data.data_final)
 
     def __check_existence(self, geo_data):
 
