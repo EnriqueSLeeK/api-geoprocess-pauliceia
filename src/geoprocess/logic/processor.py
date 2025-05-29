@@ -1,6 +1,7 @@
 from typing import List
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+from core.config import configuration
 from schemas.place_schema import lugares_area_piloto2
 from infra.database import engine, Session
 from dto.input_data import InputData
@@ -67,11 +68,15 @@ class GeoProcessor:
             )
             return None
 
+    # Favor remover isso depois e colocar a logica de geracao de id no banco de dados
     def __get_max_id(self):
         res = None
         try:
             with engine.connect() as conn:
-                res = conn.execute(text("SELECT MAX(id) FROM places_pilot_area2"))
+                res = conn.execute(
+                    text("SELECT MAX(id) FROM :table_name"),
+                    {"table_name": configuration.table_name},
+                )
                 return res.scalar_one() or 0
         except SQLAlchemyError as e:
             self.__fail_log(
@@ -123,51 +128,87 @@ class GeoProcessor:
             )
             return None
 
+
+    def extract_and_convert_data(self, geo_data):
+        item = {}
+        item["date"] = geo_data.data
+        item["author"] = geo_data.autor
+        item["source"] = geo_data.fonte
+
+        item["id_street"] = geo_data.id_rua
+        item["number"] = geo_data.numero_lugar
+        item["original_n"] = geo_data.saboya_numero
+
+        item["coord"] = self.__calculate_geographical_coord(
+            item["id_street"], geo_data.metragem
+        )
+
+        if item["coord"] is None:
+            raise ValueError()
+
+        item["geom"] = self.__convert_geographical_coord_to_SRID(item["coord"])
+
+        if item["geom"] is None:
+            raise ValueError()
+
+        try:
+            item["first_day"], item["first_month"], item["first_year"] = (
+                self.__check_date_ok(
+                    "inicio", self.__prepare_date(geo_data.data_inicio)
+                )
+            )
+        except Exception:
+            # As excecoes vao ser gravadas nos metodos
+            raise ValueError()
+
+        last_date = self.__prepare_date(geo_data.data_final)
+        if last_date is None:
+            item["last_day"], item["last_month"], item["last_year"] = [None, None, None]
+        else:
+            item["last_day"], item["last_month"], item["last_year"] = self.__check_date_ok("last", last_date)
+
+    def __check_existence(self, geo_data):
+
+        # Sera considerado um endereco duplicado se todos
+        # os requisitos a seguir forem satisfeitos:
+        #  id da rua
+        #  numero do edificio
+        #  primeiro dia, mes, ano
+        res = None
+        first_date = [int(date_component) for date_component in geo_data.data_inicio.split('/')]
+        with engine.connect() as conn:
+            query = conn.execute(
+                text("SELECT * FROM :table_name WHERE id_street=:id_street AND number=:number\
+                     AND first_day=:first_day AND first_month=:first_month AND first_year=:first_year"),
+                {
+                    "table_name": configuration.table_name,
+                    "id_street": geo_data.id_rua,
+                    "number": geo_data.numero_lugar,
+                    "first_day": first_date[0],
+                    "first_month": first_date[1],
+                    "first_year": first_date[2],
+                },
+            )
+            res = query.scalar_one()
+        if res:
+            self.__fail_log(
+                log_entry_factory(
+                    self.index,
+                    "O dado ja existe"
+                )
+            )
+            raise ValueError()
+
+
     def process_data(self) -> ReturnData:
         for index, geo_data in enumerate(self.geo_data_list):
             self.index = index + 1
-            item = {}
-            item["date"] = geo_data.data
-            item["author"] = geo_data.autor
-            item["source"] = geo_data.fonte
-
-            item["id_street"] = geo_data.id_rua
-            item["number"] = geo_data.numero_lugar
-            item["original_n"] = geo_data.saboya_numero
-
-            item["coord"] = self.__calculate_geographical_coord(
-                item["id_street"], geo_data.metragem
-            )
-
-            if item["coord"] is None:
-                continue
-
-            item["geom"] = self.__convert_geographical_coord_to_SRID(item["coord"])
-
-            if item["geom"] is None:
-                continue
 
             try:
-                item["first_day"], item["first_month"], item["first_year"] = (
-                    self.__check_date_ok(
-                        "inicio", self.__prepare_date(geo_data.data_inicio)
-                    )
-                )
-
-
+                self.__check_existence(geo_data)
+                item = self.extract_and_convert_data(geo_data)
             except Exception:
-                # As excecoes vao ser gravadas nos metodos
                 continue
-
-            last_date = self.__prepare_date(geo_data.data_final)
-            if last_date is None:
-                item["last_day"], item["last_month"], item["last_year"] = [None, None, None]
-            else:
-                try:
-                    item["last_day"], item["last_month"], item["last_year"] = self.__check_date_ok("last", last_date)
-                except Exception:
-                    continue
-
 
             self.__insert_data(item)
 

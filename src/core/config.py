@@ -13,6 +13,7 @@ class Configuration(BaseSettings):
     db_name: str
     db_host: str = "localhost"
     db_port: str = "5432"
+    table_name: str = "places_pilot_area2"
 
     db_url: Optional[PostgresDsn] = None
 
