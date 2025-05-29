@@ -148,6 +148,7 @@ class GeoProcessor:
         # os requisitos a seguir forem satisfeitos:
         #  id da rua
         #  numero do edificio
+        #  primeiro dia, mes e ano do emplacamento
 
         first_date = [int(date_component) for date_component in geo_data.data_inicio.split('/')]
 
@@ -187,7 +188,7 @@ class GeoProcessor:
         for index, geo_data in enumerate(self.geo_data_list):
             self.index = index + 1
             try:
-                # self.__check_existence(geo_data)
+                self.__check_existence(geo_data)
                 item = self.extract_and_convert_data(geo_data)
             except Exception as e:
                 continue
