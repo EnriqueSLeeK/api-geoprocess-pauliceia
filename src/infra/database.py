@@ -26,13 +26,13 @@ def check_existence_function(func_name: str):
     result_boolean = result.scalar_one()
     return result_boolean
 
-def execute_file(session: Session, file_path: str) -> bool:
+def execute_file(session, file_path: str) -> bool:
     try:
         file_content = None
         with open(file_path, "r") as f:
             file_content = f.read()
 
-        session.execute(file_content)
+        session.execute(text(file_content))
         session.commit()
         return True
     except Exception:
@@ -43,9 +43,9 @@ def execute_file(session: Session, file_path: str) -> bool:
 # Verifica se todas a funcao saboya_geometry existe no banco de dados, caso nao sera criado
 def bootstrap():
     if (not check_existence_function("saboya_geometry")):
-        with Session() as session_sql:
+        with engine.connect() as session_sql:
             if (execute_file(session_sql, 'src/sql/01_saboya_geometry_plsql.sql')):
-                print("Functio created")
+                print("Function created")
             else:
                 print("Failed to created function")
 
