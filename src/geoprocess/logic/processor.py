@@ -140,8 +140,8 @@ class GeoProcessor:
         item["source"] = geo_data.fonte
 
         item["id_street"] = geo_data.id_rua
-        item["number"] = geo_data.numero_lugar
-        item["original_n"] = geo_data.saboya_numero
+        item["number"] = geo_data.saboya_numero
+        item["original_n"] = geo_data.numero_lugar
 
         self.__extract_date(item, geo_data)
 
