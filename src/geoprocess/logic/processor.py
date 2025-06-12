@@ -196,7 +196,7 @@ class GeoProcessor:
         for index, geo_data in enumerate(self.geo_data_list):
             self.index = index + 1
             try:
-                # self.__check_existence(geo_data)
+                self.__check_existence(geo_data)
                 item = self.__extract_and_convert_data(geo_data)
             except Exception as e:
                 continue
